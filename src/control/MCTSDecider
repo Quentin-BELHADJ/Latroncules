@@ -1,0 +1,250 @@
+package control;
+import java.util.ArrayList;
+import java.util.List;
+
+import boardifier.control.Controller;
+import boardifier.control.Decider;
+import boardifier.model.Model;
+import boardifier.model.action.ActionList;
+import model.Vec2D;
+
+public class MCTSDecider extends Decider {
+
+    public MCTSDecider(Model model, Controller control) {
+        super(model, control);
+    }
+
+    @Override
+    public ActionList decide() {
+        return null;
+    }
+
+
+    class Node {
+        Move move;
+        Node parent;
+        List<Node> children;
+        int wins, visits;
+
+        Node(Move move, Node parent) {
+            this.move = move;
+            this.parent = parent;
+            this.children = new ArrayList<>();
+            this.wins = 0;
+            this.visits = 0;
+        }
+
+        void expandNode(State state) {
+            if (!terminal(state)) {
+                for (Move m : getLegalMoves(state)) {
+                    if (!isomorphic(m)) {
+                        Node child = new Node(m, this);
+                        this.children.add(child);
+                    }
+                }
+            }
+        }
+
+        void update(int result) {
+            this.visits += 1;
+            if (result == 1) { // assuming 1 means win
+                this.wins += 1;
+            }
+        }
+
+        boolean isLeaf() {
+            return this.children.isEmpty();
+        }
+
+        boolean hasParent() {
+            return this.parent != null;
+        }
+    }
+
+    public class MCTS {
+        public static Move mcts(State state) {
+            Node rootNode = new Node(null, null);
+            while (timeRemains()) {
+                Node n = rootNode;
+                State s = state.copy(); // Deep copy of the state
+                while (!n.isLeaf()) { // select leaf
+                    n = treePolicyChild(n);
+                    s.addMove(n.move);
+                }
+                n.expandNode(s); // expand
+                if (!n.isLeaf()) {
+                    n = treePolicyChild(n);
+                    s.addMove(n.move);
+                }
+                while (!terminal(s)) { // simulate
+                    s = simulationPolicyChild(s);
+                }
+                int result = evaluate(s);
+                while (n.hasParent()) { // propagate
+                    n.update(result);
+                    n = n.parent;
+                }
+            }
+            return bestMove(rootNode);
+        }
+
+        private static boolean terminal(State state) {
+            // Implementation of the terminal state check
+        }
+
+        private static List<Move> getLegalMoves(State state) {
+            // Implementation to get legal moves
+        }
+
+        private static boolean isomorphic(Move move) {
+            // Implementation to check if the move is non-isomorphic
+        }
+
+        private static Node treePolicyChild(Node node) {
+            // Implementation of the tree policy to select a child node
+        }
+
+        private static State simulationPolicyChild(State state) {
+            // Implementation of the simulation policy
+        }
+
+        private static int evaluate(State state) {
+            // Implementation to evaluate the state
+        }
+
+        private static boolean timeRemains() {
+            // Implementation to check if time remains for computation
+        }
+
+        private static Move bestMove(Node rootNode) {
+            Node bestChild = null;
+            int bestVisits = -1;
+            for (Node child : rootNode.children) {
+                if (child.visits > bestVisits) {
+                    bestVisits = child.visits;
+                    bestChild = child;
+                }
+            }
+            return bestChild.move;
+        }
+    }
+
+    // You need to define the classes State and Move according to your specific problem domain.
+import java.util.ArrayList;
+import java.util.List;
+
+    public class State {
+        private String board;
+        private char currentPlayer;
+
+        // Constructeur
+        public State(String board, char currentPlayer) {
+            this.board = board;
+            this.currentPlayer = currentPlayer;
+        }
+
+        // Méthode pour copier l'état
+        public State copy() {
+            return new State(new String(this.board), this.currentPlayer);
+        }
+
+        // Méthode pour appliquer un mouvement
+        public void applyMove(Move move) {
+            Vec2D target = move.getTarget();
+            Vec2D dest = move.getDest();
+
+            // Exemple : convertir les coordonnées en index de la chaîne
+            int targetIndex = target.getX() * boardSize + target.getY();
+            int destIndex = dest.getX() * boardSize + dest.getY();
+
+            char[] boardArray = board.toCharArray();
+            boardArray[destIndex] = boardArray[targetIndex];
+            boardArray[targetIndex] = ' '; // Supposons que ' ' représente une case vide
+
+            this.board = new String(boardArray);
+
+            // Change le joueur courant
+            this.currentPlayer = (this.currentPlayer == 'X') ? 'O' : 'X'; // Exemple pour un jeu à deux joueurs
+        }
+
+        // Méthode pour vérifier si le jeu est terminé
+        public boolean isGameOver() {
+            return isWin('X') || isWin('O') || isDraw();
+        }
+
+        // Méthode pour vérifier si le joueur a gagné
+        public boolean isWin(char player) {
+            // Implémentez la logique pour vérifier si le joueur a gagné
+            // Cela dépend du jeu spécifique
+        }
+
+        // Méthode pour vérifier si le jeu est un match nul
+        public boolean isDraw() {
+            // Implémentez la logique pour vérifier un match nul
+            // Par exemple, si toutes les cases sont remplies et qu'il n'y a pas de gagnant
+            return board.indexOf(' ') == -1 && !isWin('X') && !isWin('O');
+        }
+
+        // Méthode pour obtenir les mouvements légaux
+        public List<Move> getLegalMoves() {
+            List<Move> legalMoves = new ArrayList<>();
+
+            // Implémentez la logique pour obtenir tous les mouvements légaux
+            // Cela dépend du jeu spécifique
+            // Exemple : pour chaque case, vérifier si un mouvement est possible
+
+            return legalMoves;
+        }
+
+        // Getters et Setters
+        public String getBoard() {
+            return board;
+        }
+
+        public void setBoard(String board) {
+            this.board = board;
+        }
+
+        public char getCurrentPlayer() {
+            return currentPlayer;
+        }
+
+        public void setCurrentPlayer(char currentPlayer) {
+            this.currentPlayer = currentPlayer;
+        }
+
+        // Taille du plateau (à ajuster selon le jeu spécifique)
+        private int boardSize = 3; // Exemple pour un plateau 3x3
+
+        // Autres méthodes spécifiques à votre jeu peuvent être ajoutées ici
+    }
+
+
+    class Move {
+
+        private Vec2D target;
+        private Vec2D dest;
+
+        public Move(Vec2D t, Vec2D d){
+            target = t;
+            dest = d;
+        }
+
+        public Vec2D getDest() {
+            return dest;
+        }
+
+        public Vec2D getTarget() {
+            return target;
+        }
+
+        public void setTarget(Vec2D t){
+            target = t;
+        }
+
+        public void setDest(Vec2D d){
+            dest = d;
+        }
+    }
+
+}
